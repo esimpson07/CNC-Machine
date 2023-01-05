@@ -2,6 +2,7 @@ class StepperController {
   public:
     StepperController(short dirPin, short pulsePin, short endstopPin, bool endstopDir, int maxSteps);
     bool process();
+    bool readSwitch();
     void begin();
     void calibrate();
     void setTarget(int target, int stepsPerSecond);
@@ -13,6 +14,7 @@ class StepperController {
     unsigned short m_pulsePin;
     unsigned short m_dirPin;
     unsigned short m_endstopPin;
+    unsigned short m_switchCycles;
     int m_maxSteps;
     int m_startStep;
     int m_currentStep;
