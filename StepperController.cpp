@@ -7,6 +7,7 @@ StepperController::StepperController(short dirPin, short pulsePin, short endstop
   m_endstopPin = endstopPin;
   m_endstopDir = endstopDir;
   m_maxSteps = maxSteps;
+  m_switchCycles = 0;
 }
 
 void StepperController::begin() {
@@ -16,16 +17,42 @@ void StepperController::begin() {
 }
 
 void StepperController::calibrate() {
-  process();
-  digitalRead(m_endstopPin);
+  if(m_endstopDir == true) {
+    setTarget(m_maxSteps,10000);
+  } else {
+    setTarget(-m_maxSteps,10000);
+  }
+  while(readSwitch() == 0) {
+    process();
+  }
+  if(m_endstopDir == true) {
+    setTarget(-m_maxSteps,5000);
+  } else {
+    setTarget(m_maxSteps,5000);
+  }
+  while(readSwitch() == 1) {
+    process();
+  }
+  setTarget(0,1000);
 }
 
 void StepperController::setTarget(int target, int stepsPerSecond) {
   m_delay = 1000000 / stepsPerSecond;
-  Serial.print("delay = ");
-  Serial.println(m_delay);
+  m_pastTime = m_micros;
   m_target = target;
-  process();
+}
+
+bool StepperController::readSwitch() {
+  if(digitalRead(m_endstopPin) == 0 && m_switchCycles <= 10) {
+    m_switchCycles ++;
+  } else if(m_switchCycles > 0) {
+    m_switchCycles --;
+  }
+  if(m_switchCycles > 0) {
+    return(true);
+  } else {
+    return(false);
+  }
 }
 
 bool StepperController::process() {
