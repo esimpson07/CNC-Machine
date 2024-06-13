@@ -8,6 +8,7 @@ StepperController::StepperController(short dirPin, short pulsePin, short endstop
   m_endstopDir = endstopDir;
   m_maxSteps = maxSteps;
   m_switchCycles = 0;
+  m_unitMult = 1;
 }
 
 void StepperController::begin() {
@@ -39,16 +40,24 @@ void StepperController::calibrate() {
 void StepperController::setTarget(int target, int stepsPerSecond) {
   m_delay = 1000000 / stepsPerSecond;
   m_pastTime = m_micros;
-  m_target = target;
+  m_target = (int)((double)target * m_unitMult);
+}
+
+void StepperController::setMode(bool unitMode) {
+  if(unitMode == false) {
+    m_unitMult = 25.4;
+  } else {
+    m_unitMult = 1;
+  }
 }
 
 bool StepperController::readSwitch() {
-  if(digitalRead(m_endstopPin) == 0 && m_switchCycles <= 10) {
-    m_switchCycles ++;
+  if(digitalRead(m_endstopPin) == 0 && m_switchCycles <= 45) {
+    m_switchCycles += 2;
   } else if(m_switchCycles > 0) {
     m_switchCycles --;
   }
-  if(m_switchCycles > 0) {
+  if(m_switchCycles > 20) {
     return(true);
   } else {
     return(false);
